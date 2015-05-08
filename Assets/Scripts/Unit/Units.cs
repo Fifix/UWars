@@ -14,8 +14,18 @@ public class Units : MonoBehaviour {
 	public GameObject heavyTankPrefab;
 	//References the artillery prefab.
 	public GameObject artilleryPrefab;
+	//References the rocket launcher prefab.
+	public GameObject rocketLauncherPrefab;
+	//References the anti-air prefab.
+	public GameObject antiAirPrefab;
 	//References the missile launcher prefab.
 	public GameObject missileLauncherPrefab;
+	//References the helicopter prefab.
+	public GameObject helicopterPrefab;
+	//References the fighter prefab.
+	public GameObject fighterPrefab;
+	//References the bomber prefab.
+	public GameObject bomberPrefab;
 
 
 	
@@ -53,8 +63,23 @@ public class Units : MonoBehaviour {
 		case "Artillery":
 			result = artilleryPrefab;
 			break;
+		case "Rocket Launcher":
+			result = rocketLauncherPrefab;
+			break;
+		case "Anti Air":
+			result = antiAirPrefab;
+			break;
 		case "Missile Launcher":
 			result = missileLauncherPrefab;
+			break;
+		case "Helicopter":
+			result = helicopterPrefab;
+			break;
+		case "Fighter":
+			result = fighterPrefab;
+			break;
+		case "Bomber":
+			result = bomberPrefab;
 			break;
 		default:
 			break;

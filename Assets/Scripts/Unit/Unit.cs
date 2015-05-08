@@ -8,11 +8,13 @@ public class Unit : MonoBehaviour {
 		Foot,
 		Bazooka,
 		Tires,
-		Caterpillar
+		Caterpillar,
+		Flying
 	}
 
 	public enum UnitType {
-		Infantry, Mech, Recon, Tank, HTank, Artillery, MissLauncher
+		Infantry, Mech, Recon, Tank, HTank, Artillery, RocketLauncher, AntiAir, MissileLauncher,
+		Helicopter, Fighter, Bomber
 	}
 
 	public UnitType unitType;
@@ -31,7 +33,7 @@ public class Unit : MonoBehaviour {
 	public bool isAvailable = true;
 	public int movementPts;
 	public MovementType movementType;
-	public bool canMoveAndFire;
+	public bool canMoveAndFire; //Indirect fire units can't move AND fire on the same turn.
 
 	public int minRange;
 	public int maxRange;
@@ -42,14 +44,38 @@ public class Unit : MonoBehaviour {
 		this.owner = owner;
 	}
 
-	public int calculateDamage(UnitType defender, int attackerHP, int defenderTileDef){
-		Debug.Log ("Calculating damage...Attacker type = " + this.unitType + " / defender type = " + defender + " / attacker HP = " + attackerHP + " / defender Tile Def. rating = " + defenderTileDef);
-		int baseDamage = 0;
+	/*
+	 * Utility method to determine whether a unit can deal damage to another unit, depending on both units' types.
+	 */
+	public bool canDamageUnit(UnitType defender){
 		foreach(DamageTableStruct dmg in damageTable){
 			if(dmg.unitType == defender){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/*
+	 * Utility method to determine how much damage a unit will deal, depending on various parameters.
+	 */
+	public int calculateDamage(Unit defender, int attackerHP, int defenderTileDef){
+		Debug.Log ("Calculating damage...Attacker type = " + this.unitType + " / defender type = " + defender.unitType + " / attacker HP = " + attackerHP + " / defender Tile Def. rating = " + defenderTileDef);
+		//Sanity check, just in case...
+		if(!canDamageUnit(defender.unitType)){
+			return 0;
+		}
+
+		int baseDamage = 0;
+		foreach(DamageTableStruct dmg in damageTable){
+			if(dmg.unitType == defender.unitType){
 				baseDamage = dmg.damage;
 				break;
 			}
+		}
+		//Special case : Air units can't use tile defenses!
+		if(defender.movementType == MovementType.Flying){
+			defenderTileDef = 0;
 		}
 		int damageToDeal = (int) (baseDamage * (1 - 0.10f * defenderTileDef) * (attackerHP / 100.0f));
 		//An attack does at least 1 damage.
@@ -62,6 +88,9 @@ public class Unit : MonoBehaviour {
 
 	}
 
+	/*
+	 * Utility method to quickly calculate how much mvt points a unit will still have after moving to a given tile.
+	 */
 	public int simulateRemainingMovement(TerrainTile tile, int remainingMvtPoints){
 		int mvtCost = 9999;
 		switch(movementType){
@@ -77,20 +106,15 @@ public class Unit : MonoBehaviour {
 			case MovementType.Caterpillar:
 				mvtCost = tile.mvtCostCaterpillar;
 			break;
+			case MovementType.Flying:
+				mvtCost = tile.mvtCostAir;
+			break;
 			default:
+				Debug.LogWarning("Unit.simulateRemainingMovement : A movement type isn't tied to a tile movement cost!");
 			break;
 
 		}
 		return remainingMvtPoints - mvtCost;
 	}
-		
-		// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
 }

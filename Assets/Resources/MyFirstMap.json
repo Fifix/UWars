@@ -8,9 +8,9 @@
 			{"type": "Mountains", "unit": "Infantry", "unitOwner": 1},
 			{"type": "Mountains"},
 			{"type": "Mountains"},
-			{"type": "Mountains"},
-			{"type": "Mountains"},
-			{"type": "Mountains"},
+			{"type": "Mountains", "unit": "Helicopter", "unitOwner": 1},
+			{"type": "Mountains", "unit": "Bomber", "unitOwner": 1},
+			{"type": "Mountains", "unit": "Fighter", "unitOwner": 1},
 			{"type": "Mountains"},
 			{"type": "Mountains"},
 			
@@ -24,8 +24,8 @@
 			{"type": "Mountains"},
 			
 			{"type": "Mountains"},
-			{"type": "Plains"},
-			{"type": "Plains"},
+			{"type": "Plains", "unit": "Missile Launcher", "unitOwner": 2},
+			{"type": "Plains", "unit": "Fighter", "unitOwner": 2},
 			{"type": "Road"},
 			{"type": "River"},
 			{"type": "Plains"},
@@ -38,7 +38,7 @@
 			{"type": "Road", "unit": "Tank", "unitOwner": 2},
 			{"type": "Plains"},
 			{"type": "Woods", "unit": "Mech", "unitOwner": 2},
-			{"type": "Woods"},
+			{"type": "Woods", "unit": "Anti Air", "unitOwner": 2},
 			{"type": "Mountains"},
 			
 			{"type": "Mountains"},
@@ -60,7 +60,7 @@
 			{"type": "Mountains"},
 			
 			{"type": "Mountains"},
-			{"type": "Woods", "unit": "Missile Launcher", "unitOwner": 1},
+			{"type": "Woods", "unit": "Rocket Launcher", "unitOwner": 1},
 			{"type": "Woods", "unit": "Heavy Tank", "unitOwner": 1},
 			{"type": "Plains"},
 			{"type": "Plains"},

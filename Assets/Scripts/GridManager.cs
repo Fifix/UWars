@@ -4,7 +4,14 @@ using System;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 using SimpleJSON;
+using Directions;
 
+
+namespace Directions{
+	public enum Direction {
+		E, NE, NW, W, SW, SE
+	}
+}
 
 public class GridManager : MonoBehaviour {
 
@@ -23,10 +30,6 @@ public class GridManager : MonoBehaviour {
 	private static Transform gridUIHolder;
 	//Contains a representation of the board.
 	private TerrainTile[,] board;
-
-	public enum Direction {
-		E, NE, NW, W, SW, SE
-	}
 
 	public enum CurrentState {
 		None, SelectedUnit, MovedUnit, TargetingEnemyUnit
@@ -102,11 +105,11 @@ public class GridManager : MonoBehaviour {
 	private void buildNeighbors(){
 		for(int y = 0; y < rows; y++){
 			for(int x = 0; x < columns; x++){
-				List<TerrainTile> neighbors = new List<TerrainTile>();
+				Dictionary<Direction, TerrainTile> neighbors = new Dictionary<Direction, TerrainTile>();
 				foreach(Direction dir in Enum.GetValues (typeof(Direction))){
 					Vector2 reference = getNeighborPosition((int) x, (int) y, dir);
 					if(isPositionValid(reference)){
-						neighbors.Add (board[(int) reference.x, (int) reference.y]);
+						neighbors.Add (dir, board[(int) reference.x, (int) reference.y]);
 					}
 				}
 
@@ -222,10 +225,14 @@ public class GridManager : MonoBehaviour {
 	 * Gets the tiles a unit can move to.
 	 */
 	public List<TerrainTile> getTilesInMovementRange(TerrainTile orig){
-		List<TerrainTile> results = new List<TerrainTile> ();
+		Dictionary<TerrainTile, int> bestPathForTile = new Dictionary<TerrainTile, int> ();
 		if(orig != null && orig.unit != null){
-			results.Add (orig);
-			results.AddRange (getTilesInMovementRange(orig, orig.unit, orig.unit.movementPts));
+			bestPathForTile.Add (orig, orig.unit.movementPts);
+			getTilesInMovementRange(orig, orig, orig.unit.movementPts, bestPathForTile);
+		}
+		List<TerrainTile> results = new List<TerrainTile>();
+		foreach(KeyValuePair<TerrainTile, int> tileDictionaryElt in bestPathForTile){
+			results.Add (tileDictionaryElt.Key);
 		}
 		return results;
 	}
@@ -233,45 +240,42 @@ public class GridManager : MonoBehaviour {
 	/*
 	 * Recursive function to build the tile list of possible tiles a unit can move to.
 	 */
-	public List<TerrainTile> getTilesInMovementRange(TerrainTile orig, Unit unit, int remainingMovement){
-		List<TerrainTile> results = new List<TerrainTile> ();
+	public void getTilesInMovementRange(TerrainTile currTile, TerrainTile unitTile, int remainingMovement, Dictionary<TerrainTile, int> bestPathForTile){
+		foreach(KeyValuePair<Direction, TerrainTile> tileDictionaryElt in currTile.neighbors){
+			int simulatedRemainingMovement = unitTile.unit.simulateRemainingMovement(tileDictionaryElt.Value, remainingMovement);
 
-		foreach(TerrainTile tile in orig.neighbors){
-			int simulatedRemainingMovement = unit.simulateRemainingMovement(tile, remainingMovement);
+			//Do we have enough movement points to keep going? Is the tile empty or has a friendly unit on it?
+			if(simulatedRemainingMovement >= 0 && (tileDictionaryElt.Value.unit == null || tileDictionaryElt.Value.unit.owner == unitTile.unit.owner)){
 
-			//There are some cases to handle :
+				//Now, let's see if we already did find that tile as a viable destination.
+				int bestRemainingMovement;
+				bool foundElement = bestPathForTile.TryGetValue (tileDictionaryElt.Value, out bestRemainingMovement);
 
-			//- There's no unit on the destination tile : It's all good.
-
-			//- There's a unit on the destination tile : 
-			//-- If it's one of the player's units, we can go deeper
-			//-- If not, we can't.
-			//-- We can't stop on that tile in both cases.
-
-			//- Of course, the unit must have enough movement points to reach that tile!
-
-			if(simulatedRemainingMovement >= 0 && (tile.unit == null)){
-				//Let's try not adding more than one time a given tile...
-				TerrainTile toFind = results.Find ((TerrainTile obj) => obj.gamePosition.Equals(tile.gamePosition));
-				if(toFind == null){
-					results.Add (tile);
-				}
-			}
-
-			if(simulatedRemainingMovement >= 0 && (tile.unit == null || tile.unit.owner == unit.owner)){
-				List<TerrainTile> recursiveResults = getTilesInMovementRange(tile, unit, simulatedRemainingMovement);
-				foreach(TerrainTile recursiveResult in recursiveResults){
-					TerrainTile toFindRecursive = results.Find ((TerrainTile obj) => obj.gamePosition.Equals(recursiveResult.gamePosition));
-					if(toFindRecursive == null){
-						results.Add (recursiveResult);
+				if(foundElement){
+					//It seems we've already found it before! Is it a better solution than before?
+					if(bestRemainingMovement < simulatedRemainingMovement){
+						//Yup! Let's update the dictionary, and recalculate everything else from there!
+						if(tileDictionaryElt.Value.unit == null){
+							bestPathForTile.Remove (tileDictionaryElt.Value);
+							bestPathForTile.Add (tileDictionaryElt.Value, simulatedRemainingMovement);
+						}
+						getTilesInMovementRange(tileDictionaryElt.Value, unitTile, simulatedRemainingMovement, bestPathForTile);
 					}
+					else{
+						//We're not enhancing the solution, so we stop right there.
+					}
+				}
+				else{
+					//Nope, the element isn't in the dictionary. Let's add it, and check its neighbors to see if we can add more tiles.
+					if(tileDictionaryElt.Value.unit == null){
+						bestPathForTile.Add (tileDictionaryElt.Value, simulatedRemainingMovement);
+					}
+					getTilesInMovementRange(tileDictionaryElt.Value, unitTile, simulatedRemainingMovement, bestPathForTile);
 				}
 			}
 		}
-
-		return results;
 	}
-
+	
 	/*
 	 * Gets the tiles a unit could be able to fire on.
 	 */
@@ -282,16 +286,16 @@ public class GridManager : MonoBehaviour {
 			//- Indirect fire unit : Can't move, but can hit X to Y tiles away.
 			//- Direct fire unit : Can move, can hit units on adjacent tiles. Easy to handle, as we know where a unit can go.
 			if(orig.unit.canMoveAndFire){
-				List<TerrainTile> recursiveResults = getTilesInMovementRange(orig, orig.unit, orig.unit.movementPts);
+				List<TerrainTile> recursiveResults = getTilesInMovementRange(orig);
 				foreach(TerrainTile recursiveResult in recursiveResults){
 					TerrainTile toFindRecursive = results.Find ((TerrainTile obj) => obj.gamePosition.Equals(recursiveResult.gamePosition));
 					if(toFindRecursive == null){
 						results.Add (recursiveResult);
 					}
-					foreach(TerrainTile neighbor in recursiveResult.neighbors){
-						TerrainTile toFindNeighbor = results.Find ((TerrainTile obj) => obj.gamePosition.Equals(neighbor.gamePosition));
+					foreach(KeyValuePair<Direction, TerrainTile> tileDictionaryElt in recursiveResult.neighbors){
+						TerrainTile toFindNeighbor = results.Find ((TerrainTile obj) => obj.gamePosition.Equals(tileDictionaryElt.Value.gamePosition));
 						if(toFindNeighbor == null){
-							results.Add (neighbor);
+							results.Add (tileDictionaryElt.Value);
 						}
 					}
 				}
@@ -399,12 +403,15 @@ public class GridManager : MonoBehaviour {
 		if(tile != null && tile.unit != null){
 			List<TerrainTile> tilesInFiringRange = new List<TerrainTile>();
 			if(tile.unit.canMoveAndFire){
-				tilesInFiringRange = tile.neighbors;
+				foreach(KeyValuePair<Direction, TerrainTile> tileDictionaryElt in tile.neighbors){
+					tilesInFiringRange.Add (tileDictionaryElt.Value);
+				}
 			} else{
 				tilesInFiringRange = getTilesInFiringRange(tile);
 			}
 			foreach(TerrainTile availableTile in tilesInFiringRange){
-				if(availableTile.unit != null && availableTile.unit.owner != tile.unit.owner){
+				//To be able to fire on a unit, it must belong to another player, and the attacking unit must be able to damage it.
+				if(availableTile.unit != null && availableTile.unit.owner != tile.unit.owner && tile.unit.canDamageUnit(availableTile.unit.unitType)){
 					Debug.Log ("Valid tile to fire at at position " + availableTile.gamePosition);
 					results.Add(availableTile);
 				}
@@ -614,12 +621,11 @@ public class GridManager : MonoBehaviour {
 					if(tile != null){
 						GameObject target = availableTargetsGridUIInstances.Find ((GameObject obj) => obj.transform.position.Equals(tile.gameObject.transform.position));
 						if(target != null){
-
-							int damage = destinationTile.unit.calculateDamage(tile.unit.unitType, destinationTile.unit.hitPoints, tile.defenseRating);
+							int damage = destinationTile.unit.calculateDamage(tile.unit, destinationTile.unit.hitPoints, tile.defenseRating);
 							damageUnit((int) tile.gamePosition.x, (int) tile.gamePosition.y, damage);
 							//If both units are melee and alive, the defender can fire back at the attacker.
 							if(tile.unit != null && tile.unit.canMoveAndFire && destinationTile.unit.canMoveAndFire){
-								damage = tile.unit.calculateDamage(destinationTile.unit.unitType, tile.unit.hitPoints, destinationTile.defenseRating);
+								damage = tile.unit.calculateDamage(destinationTile.unit, tile.unit.hitPoints, destinationTile.defenseRating);
 								damageUnit((int) destinationTile.gamePosition.x, (int) destinationTile.gamePosition.y, damage);
 							}
 							finishUnitAction();

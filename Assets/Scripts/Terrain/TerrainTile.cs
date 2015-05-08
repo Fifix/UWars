@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Directions;
 
 public class TerrainTile : MonoBehaviour {
 	
@@ -7,6 +8,7 @@ public class TerrainTile : MonoBehaviour {
 	public int mvtCostBazooka;
 	public int mvtCostTires;
 	public int mvtCostCaterpillar;
+	public int mvtCostAir = 1;
 
 	public int defenseRating;
 
@@ -14,7 +16,7 @@ public class TerrainTile : MonoBehaviour {
 
 	public Unit unit;
 
-	public List<TerrainTile> neighbors;
+	public Dictionary<Direction, TerrainTile> neighbors;
 
 	public void init(Vector2 gamePosition){
 		this.gamePosition = gamePosition;
