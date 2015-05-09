@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System;
 
@@ -38,10 +39,19 @@ public class Unit : MonoBehaviour {
 	public int minRange;
 	public int maxRange;
 
-
+	private GameObject unitHPCanvas;
+	private Text unitHPText;
 	
 	public void init(int owner){
 		this.owner = owner;
+		unitHPCanvas = this.gameObject.transform.GetChild (0).gameObject;
+		unitHPText = unitHPCanvas.transform.GetChild (0).GetComponent<Text> ();
+		setHPText (10);
+	}
+
+	public void setHPText(int HPtext){
+		unitHPCanvas.SetActive(HPtext < 10);
+		unitHPText.text = HPtext.ToString();
 	}
 
 	/*

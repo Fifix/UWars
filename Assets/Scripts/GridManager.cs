@@ -335,6 +335,14 @@ public class GridManager : MonoBehaviour {
 			hp = hp - hp % 10;
 		}
 
+		//If unit has 1-10HP, show 1.
+		//If unit has 11-20HP, show 2.
+		//And so on...
+		//If a unit has 0HP or less, it dies.
+		//If a unit has 100HP, don't show the HP near its sprite.
+
+		board[gridX, gridY].unit.setHPText (hp/10);
+
 		board[gridX, gridY].unit.hitPoints = hp;
 		if(hp <= 0){
 			Destroy(board[gridX, gridY].unit.gameObject);
