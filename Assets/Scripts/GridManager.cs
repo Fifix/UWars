@@ -508,6 +508,26 @@ public class GridManager : MonoBehaviour {
 	void Update () {
 
 		RaycastHit2D hit = Physics2D.Raycast(Camera.allCameras[0].ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+		if (hit.collider != null) {
+			TerrainTile tile = hit.collider.gameObject.GetComponent<TerrainTile>();
+			if(tile != null){
+				Main.instance.tileStatsUI.SetActive (true);
+				Main.instance.tileType.GetComponent<Text>().text = tile.tileType;
+				Main.instance.defenseRating.GetComponent<Text>().text = tile.defenseRating.ToString();
+
+				if(tile.unit != null){
+					Main.instance.unitStatsUI.SetActive (true);
+					Main.instance.unitType.GetComponent<Text>().text = tile.unit.unitType.ToString();
+					Main.instance.unitHP.GetComponent<Text>().text = tile.unit.hitPoints.ToString();
+				}
+				else{
+					Main.instance.unitStatsUI.SetActive (false);
+				}
+			}
+		} else {
+			Main.instance.tileStatsUI.SetActive (false);
+			Main.instance.unitStatsUI.SetActive (false);
+		}
 
 		if(currentState == CurrentState.None){
 			if (Input.GetMouseButtonDown(0)){ // if left button pressed...

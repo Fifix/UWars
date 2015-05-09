@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Directions;
 
 public class TerrainTile : MonoBehaviour {
-	
+
+	public string tileType;
+
 	public int mvtCostFoot;
 	public int mvtCostBazooka;
 	public int mvtCostTires;

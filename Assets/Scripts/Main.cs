@@ -14,6 +14,14 @@ public class Main : MonoBehaviour {
 
 	public GameObject gridUITiles;
 
+	public GameObject tileStatsUI;
+	public GameObject tileType;
+	public GameObject defenseRating;
+
+	public GameObject unitStatsUI;
+	public GameObject unitType;
+	public GameObject unitHP;
+
 	public GameObject ordersUI;
 	public GameObject waitButton;
 	public GameObject attackButton;
