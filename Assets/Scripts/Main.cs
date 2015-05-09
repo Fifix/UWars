@@ -26,6 +26,10 @@ public class Main : MonoBehaviour {
 	public GameObject waitButton;
 	public GameObject attackButton;
 
+	public GameObject dmgCalculationUI;
+	public GameObject dmgToDefender;
+	public GameObject dmgToAttacker;
+
 	public GameObject currentPlayerText;
 	public GameObject endTurnButton;
 

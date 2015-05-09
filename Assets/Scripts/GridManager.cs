@@ -518,7 +518,9 @@ public class GridManager : MonoBehaviour {
 		RaycastHit2D hit = Physics2D.Raycast(Camera.allCameras[0].ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
 		if (hit.collider != null) {
 			TerrainTile tile = hit.collider.gameObject.GetComponent<TerrainTile>();
-			if(tile != null){
+			if(currentState == CurrentState.None){
+				Main.instance.dmgCalculationUI.SetActive(false);
+
 				Main.instance.tileStatsUI.SetActive (true);
 				Main.instance.tileType.GetComponent<Text>().text = tile.tileType;
 				Main.instance.defenseRating.GetComponent<Text>().text = tile.defenseRating.ToString();
@@ -531,10 +533,84 @@ public class GridManager : MonoBehaviour {
 				else{
 					Main.instance.unitStatsUI.SetActive (false);
 				}
+			} else {
+				Main.instance.tileStatsUI.SetActive (false);
+				Main.instance.unitStatsUI.SetActive (false);
+				if(currentState == CurrentState.TargetingEnemyUnit){
+
+					if(tile.unit != null){
+						//We must show the Damage Calculation UI only if we can fire at that unit...
+						GameObject target = availableTargetsGridUIInstances.Find ((GameObject obj) => obj.transform.position.Equals(tile.gameObject.transform.position));
+						if(target != null){
+							Main.instance.dmgCalculationUI.SetActive(true);
+
+							int simulatedDamageToDefender = destinationTile.unit.calculateDamage(tile.unit, destinationTile.unit.hitPoints, tile.defenseRating);
+							//Unit with 97HP, the attacker deals 41 dmg. It will either do 41 dmg or "crit" and deal 47 dmg.
+							int simulatedDefRemainingHP = tile.unit.hitPoints - simulatedDamageToDefender;
+							if(simulatedDefRemainingHP > 0){
+								int maxSimDmgToDefender = simulatedDamageToDefender + simulatedDefRemainingHP % 10;
+								if(simulatedDamageToDefender == maxSimDmgToDefender){
+									//Show that damage dealt is X. No possibility to "crit".
+									Main.instance.dmgToDefender.GetComponent<Text>().text = simulatedDamageToDefender.ToString();
+								}
+								else{
+									//Show that damage dealt is either X or Y ("crit").
+									Main.instance.dmgToDefender.GetComponent<Text>().text = simulatedDamageToDefender.ToString() + " or " + maxSimDmgToDefender.ToString();
+								}
+							}
+							else{
+								//Show that the defender doesn't stand a single chance.
+								Main.instance.dmgToDefender.GetComponent<Text>().text = simulatedDamageToDefender.ToString() + " (SURE KILL)";
+							}
+
+							if(simulatedDefRemainingHP > 0){
+								//Okay, the defender is still alive. Can it fire back?
+								if(tile.unit.canMoveAndFire && destinationTile.unit.canMoveAndFire){
+									int simulatedDamageToAttacker = tile.unit.calculateDamage(destinationTile.unit, tile.unit.hitPoints - simulatedDamageToDefender, destinationTile.defenseRating);
+									int simulatedAtkRemainingHP = destinationTile.unit.hitPoints - simulatedDamageToAttacker;
+									if(simulatedAtkRemainingHP > 0){
+										int maxSimDmgToAttacker = simulatedDamageToAttacker + simulatedAtkRemainingHP % 10;
+										if(simulatedDamageToAttacker == maxSimDmgToAttacker){
+											//Show that the counter-strike deas  X. No possibility to "crit".
+											Main.instance.dmgToAttacker.GetComponent<Text>().text = simulatedDamageToAttacker.ToString();
+										}
+										else{
+											//Show that the counter-strike deals either X or Y ("crit").
+											Main.instance.dmgToAttacker.GetComponent<Text>().text = simulatedDamageToAttacker.ToString() + " or " + maxSimDmgToAttacker.ToString();
+										}
+									}
+									else{
+										//Show that the attacker doesn't stand a single chance.
+										Main.instance.dmgToAttacker.GetComponent<Text>().text = simulatedDamageToAttacker.ToString() + " (SURE KILL)";
+									}
+								}
+								else{
+									//Show that the defender can't fire back (indirect fire unit, or hit by an indirect fire enemy).
+									Main.instance.dmgToAttacker.GetComponent<Text>().text = "0 (NO COUNTER)";
+								}
+							}
+							else{
+								//Show that the defender can't fire back, since it dies on that strike.
+								Main.instance.dmgToAttacker.GetComponent<Text>().text = "0 (DEAD)";
+							}
+
+						}
+						else{
+							Main.instance.dmgCalculationUI.SetActive(false);
+						}
+					}
+					else{
+						Main.instance.dmgCalculationUI.SetActive(false);
+					}
+				}
+				else{
+					Main.instance.dmgCalculationUI.SetActive(false);
+				}
 			}
 		} else {
 			Main.instance.tileStatsUI.SetActive (false);
 			Main.instance.unitStatsUI.SetActive (false);
+			Main.instance.dmgCalculationUI.SetActive(false);
 		}
 
 		if(currentState == CurrentState.None){
