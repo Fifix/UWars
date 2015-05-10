@@ -30,6 +30,7 @@ public class Main : MonoBehaviour {
 	public GameObject dmgToDefender;
 	public GameObject dmgToAttacker;
 
+	public GameObject playerTurnUI;
 	public GameObject currentPlayerText;
 	public GameObject endTurnButton;
 

@@ -502,6 +502,7 @@ public class GridManager : MonoBehaviour {
 	public void finishUnitAction(){
 		currentState = CurrentState.None;
 		setUnitState(destinationTile.unit, false);
+		Main.instance.playerTurnUI.SetActive(true);
 		
 		originTile = null;
 		destinationTile = null;
@@ -622,6 +623,7 @@ public class GridManager : MonoBehaviour {
 					if(tile != null){
 						if(tile.unit != null && tile.unit.isAvailable && tile.unit.owner == currentPlayer){
 							Debug.Log ("Selected an available unit! Switching to CurrentState.SelectedUnit");
+							Main.instance.playerTurnUI.SetActive(false);
 							currentState = CurrentState.SelectedUnit;
 							originTile = tile;
 							hideUITiles(gridUIMoveInstances);
@@ -700,6 +702,7 @@ public class GridManager : MonoBehaviour {
 				originTile = null;
 				hideUITiles(gridUIMoveInstances);
 				currentState = CurrentState.None;
+				Main.instance.playerTurnUI.SetActive(true);
 			}
 
 		}
