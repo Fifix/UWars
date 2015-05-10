@@ -6,7 +6,6 @@ public class CameraDragManager : MonoBehaviour {
 	private Vector3 origin;
 	private Vector3 difference;
 	private bool isDragging=false;
-	
 
 	void LateUpdate () {
 		Camera cam = Camera.allCameras[0];
@@ -22,5 +21,15 @@ public class CameraDragManager : MonoBehaviour {
 		if (isDragging){
 			cam.transform.position = origin-difference;
 		}
+
+		if (Input.GetAxisRaw ("Mouse ScrollWheel") > 0) {
+			Debug.Log ("ScrollWheel is positive");
+			cam.orthographicSize--;
+		}
+		else if(Input.GetAxisRaw ("Mouse ScrollWheel") < 0) {
+			Debug.Log ("ScrollWheel is negative");
+			cam.orthographicSize++;
+		}
+		cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, 3, 10);
 	}
 }
