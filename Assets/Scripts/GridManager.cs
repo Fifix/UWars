@@ -21,6 +21,7 @@ public class GridManager : MonoBehaviour {
 	public int rows;
 	public int currentPlayer = 1;
 	private int nbPlayers;
+	private int[] playersMoney;
 
 	//Allows to organize tiles in the scene.
 	private static Transform boardHolder;
@@ -65,6 +66,10 @@ public class GridManager : MonoBehaviour {
 		JSONNode json = JSON.Parse (mapJson);
 		string mapName = json["name"];
 		nbPlayers = json["players"].AsInt;
+		playersMoney = new int[nbPlayers];
+		for(int i = 0; i < nbPlayers; i++){
+			playersMoney[i] = 0;
+		}
 
 		rows = json["map"]["rows"].AsInt;
 		columns = json["map"]["columns"].AsInt;
@@ -84,7 +89,8 @@ public class GridManager : MonoBehaviour {
 					instance.transform.SetParent(boardHolder);
 					if(tileToInstantiate.Equals(TerrainTiles.instance.cityPrefab) 
 					|| tileToInstantiate.Equals (TerrainTiles.instance.factoryPrefab)
-					|| tileToInstantiate.Equals (TerrainTiles.instance.airportPrefab)){
+					|| tileToInstantiate.Equals (TerrainTiles.instance.airportPrefab)
+					|| tileToInstantiate.Equals (TerrainTiles.instance.hqPrefab)){
 						int tileOwner = json["map"]["tiles"][y*columns + x]["tileOwner"].AsInt;
 						terrainTile.setTileOwner(tileOwner);
 					}
@@ -103,6 +109,8 @@ public class GridManager : MonoBehaviour {
 		}
 
 		buildNeighbors();
+		currentPlayer = 1;
+		beginTurn();
 	}
 
 	/*
@@ -478,17 +486,29 @@ public class GridManager : MonoBehaviour {
 	 * Handles clicks on the End Turn button.
 	 */
 	public void OnEndTurnClick(){
-		foreach(TerrainTile tile in board){
-			if(tile.unit != null){
-				tile.unit.setUnitState(true);
-			}
-		}
 		currentPlayer = currentPlayer + 1;
 		if(currentPlayer > nbPlayers){
 			currentPlayer = 1;
 		}
 
+		beginTurn();
+	}
+
+	/*
+	 * Called when beginning a turn (on board creation, when clicking on End Turn...)
+	 */
+	public void beginTurn(){
+		foreach(TerrainTile tile in board){
+			if(tile.unit != null){
+				tile.unit.setUnitState(true);
+			}
+			if(tile.canBeCaptured && tile.owner == currentPlayer){
+				playersMoney[currentPlayer - 1] += 1000;
+			}
+		}
+
 		Main.instance.currentPlayerText.GetComponent<Text>().text = "Player " + currentPlayer + " Turn";
+		Main.instance.currentMoneyText.GetComponent<Text>().text = playersMoney[currentPlayer - 1].ToString();
 	}
 
 	/*

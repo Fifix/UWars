@@ -23,7 +23,7 @@
 			{"type": "Plains"},
 			{"type": "Mountains"},
 			
-			{"type": "Mountains"},
+			{"type": "HQ", "tileOwner": 1},
 			{"type": "Plains", "unit": "Missile Launcher", "unitOwner": 2},
 			{"type": "Plains", "unit": "Fighter", "unitOwner": 2},
 			{"type": "Road"},
@@ -75,7 +75,7 @@
 			{"type": "Mountains"},
 			{"type": "Mountains"},
 			{"type": "Mountains"},
-			{"type": "Mountains"}
+			{"type": "HQ", "tileOwner": 2}
 		]
 	}
 }

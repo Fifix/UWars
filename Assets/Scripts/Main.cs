@@ -41,6 +41,7 @@ public class Main : MonoBehaviour {
 	[Header("Player turn UI")]
 	public GameObject playerTurnUI;
 	public GameObject currentPlayerText;
+	public GameObject currentMoneyText;
 	public GameObject endTurnButton;
 
 	void Awake () {

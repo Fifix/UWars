@@ -18,6 +18,8 @@ public class TerrainTiles : MonoBehaviour {
 	public GameObject factoryPrefab;
 	//References the airport tile prefab.
 	public GameObject airportPrefab;
+	//References the HQ tile prefab.
+	public GameObject hqPrefab;
 
 	public static TerrainTiles instance = null;
 
@@ -58,6 +60,9 @@ public class TerrainTiles : MonoBehaviour {
 			break;
 		case "Airport":
 			result = airportPrefab;
+			break;
+		case "HQ":
+			result = hqPrefab;
 			break;
 		default:
 			break;
