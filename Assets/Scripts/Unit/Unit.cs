@@ -31,6 +31,7 @@ public class Unit : MonoBehaviour {
 	public int owner;
 	public int hitPoints = 100;
 
+	public bool canCapture = false;
 	public bool isAvailable = true;
 	public int movementPts;
 	public MovementType movementType;
@@ -52,6 +53,33 @@ public class Unit : MonoBehaviour {
 	public void setHPText(int HPtext){
 		unitHPCanvas.SetActive(HPtext < 10);
 		unitHPText.text = HPtext.ToString();
+	}
+
+	/*
+	 * Utility method to modify the unit's state (and it's color).
+	 */
+	public void setUnitState(bool isActive){
+		isAvailable = isActive;
+		SpriteRenderer unitSpriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+		if(owner == 1){
+			if(isActive){
+				unitSpriteRenderer.color = new Color(1f, 0, 0);
+			}
+			else{
+				unitSpriteRenderer.color = new Color(0.3f, 0, 0);
+			}
+		}
+		else if(owner == 2){
+			if(isActive){
+				unitSpriteRenderer.color = new Color(0, 0, 1f);
+			}
+			else{
+				unitSpriteRenderer.color = new Color(0, 0, 0.3f);
+			}
+		} else{
+			Debug.LogError("setUnitState must implement new players!");
+		}
+		
 	}
 
 	/*

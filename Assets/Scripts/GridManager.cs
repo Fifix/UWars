@@ -82,6 +82,12 @@ public class GridManager : MonoBehaviour {
 					terrainTile.init(new Vector2(x, y));
 					board[x, y] = terrainTile;
 					instance.transform.SetParent(boardHolder);
+					if(tileToInstantiate.Equals(TerrainTiles.instance.cityPrefab) 
+					|| tileToInstantiate.Equals (TerrainTiles.instance.factoryPrefab)
+					|| tileToInstantiate.Equals (TerrainTiles.instance.airportPrefab)){
+						int tileOwner = json["map"]["tiles"][y*columns + x]["tileOwner"].AsInt;
+						terrainTile.setTileOwner(tileOwner);
+					}
 				} else {
 					Debug.LogError("Woops, map seems wrong!");
 				}
@@ -315,7 +321,7 @@ public class GridManager : MonoBehaviour {
 		GameObject instance = Instantiate (unitPrefab, board[gridX, gridY].transform.position, Quaternion.identity) as GameObject;
 		Unit unitInstance = instance.GetComponent<Unit>();
 		unitInstance.init(owner);
-		setUnitState(unitInstance, initialState);
+		unitInstance.setUnitState(initialState);
 
 		board[gridX, gridY].unit = unitInstance;
 		instance.transform.SetParent(unitsHolder);
@@ -335,19 +341,29 @@ public class GridManager : MonoBehaviour {
 			hp = hp - hp % 10;
 		}
 
-		//If unit has 1-10HP, show 1.
-		//If unit has 11-20HP, show 2.
-		//And so on...
-		//If a unit has 0HP or less, it dies.
-		//If a unit has 100HP, don't show the HP near its sprite.
-
-		board[gridX, gridY].unit.setHPText (hp/10);
+		board[gridX, gridY].unit.setHPText (calculateHPBaseTen(hp));
 
 		board[gridX, gridY].unit.hitPoints = hp;
 		if(hp <= 0){
 			Destroy(board[gridX, gridY].unit.gameObject);
 			board[gridX, gridY].unit = null;
+			if(board[gridX, gridY].canBeCaptured){
+				board[gridX, gridY].resetCaptureStatus();
+			}
 		}
+	}
+
+	/*
+	 *  Converts a value from 1 to 100 to a value from 1 to 10, 1-10 being 1, 11-20 being 2, and so on.
+	 *  Used when the game needs to know how many capture points are taken away on a Capture command, 
+	 *  or which number it has to show near the unit sprite.
+	 */
+	public int calculateHPBaseTen(int hpBaseHundred){
+		int hpBaseTen = hpBaseHundred/10;
+		if(hpBaseHundred%10 != 0){
+			hpBaseTen++;
+		}
+		return hpBaseTen;
 	}
 
 	/*
@@ -429,6 +445,14 @@ public class GridManager : MonoBehaviour {
 	}
 
 	/*
+	 * Called when the player clicks on the Capture command.
+	 */
+	public void OnCaptureCommandClick(){
+		destinationTile.captureTile(calculateHPBaseTen(destinationTile.unit.hitPoints), destinationTile.unit.owner);
+		finishUnitAction();
+	}
+
+	/*
 	 * Called when the player clicks on the Attack command.
 	 */
 	public void onAttackCommandClick(){
@@ -451,41 +475,12 @@ public class GridManager : MonoBehaviour {
 	}
 
 	/*
-	 * Utility method to modify the unit's state (and it's color).
-	 */
-	private void setUnitState(Unit unit, bool isActive){
-		if(unit != null){
-			unit.isAvailable = isActive;
-			SpriteRenderer unitSpriteRenderer = unit.gameObject.GetComponent<SpriteRenderer>();
-			if(unit.owner == 1){
-				if(isActive){
-					unitSpriteRenderer.color = new Color(1f, 0, 0);
-				}
-				else{
-					unitSpriteRenderer.color = new Color(0.3f, 0, 0);
-				}
-			}
-			else if(unit.owner == 2){
-				if(isActive){
-					unitSpriteRenderer.color = new Color(0, 0, 1f);
-				}
-				else{
-					unitSpriteRenderer.color = new Color(0, 0, 0.3f);
-				}
-			} else{
-				Debug.LogError("setUnitState must implement new players!");
-			}
-		}
-
-	}
-
-	/*
 	 * Handles clicks on the End Turn button.
 	 */
 	public void OnEndTurnClick(){
 		foreach(TerrainTile tile in board){
 			if(tile.unit != null){
-				setUnitState(tile.unit, true);
+				tile.unit.setUnitState(true);
 			}
 		}
 		currentPlayer = currentPlayer + 1;
@@ -501,9 +496,17 @@ public class GridManager : MonoBehaviour {
 	 */
 	public void finishUnitAction(){
 		currentState = CurrentState.None;
-		setUnitState(destinationTile.unit, false);
+		//If attacker is still alive, deactive it.
+		if(destinationTile.unit != null){
+			destinationTile.unit.setUnitState(false);
+		}
 		Main.instance.playerTurnUI.SetActive(true);
-		
+
+		//If the origin and destination tiles are different (indicating a movement), reset its capture points to 20.
+		if(originTile.canBeCaptured && !originTile.Equals(destinationTile)){
+			originTile.resetCaptureStatus();
+		}
+
 		originTile = null;
 		destinationTile = null;
 		hideUITiles(gridUIMoveInstances);
@@ -534,9 +537,25 @@ public class GridManager : MonoBehaviour {
 				else{
 					Main.instance.unitStatsUI.SetActive (false);
 				}
+
+				if(tile.canBeCaptured){
+					Main.instance.captureStateUI.SetActive (true);
+					if(tile.owner == 0){
+						Main.instance.tileOwner.GetComponent<Text>().text = "Neutral";
+					}
+					else{
+						Main.instance.tileOwner.GetComponent<Text>().text = "Player " + tile.owner;
+					}
+					Main.instance.capturePoints.GetComponent<Text>().text = tile.capturePoints.ToString();
+
+				}
+				else{
+					Main.instance.captureStateUI.SetActive (false);
+				}
 			} else {
 				Main.instance.tileStatsUI.SetActive (false);
 				Main.instance.unitStatsUI.SetActive (false);
+				Main.instance.captureStateUI.SetActive (false);
 				if(currentState == CurrentState.TargetingEnemyUnit){
 
 					if(tile.unit != null){
@@ -612,6 +631,7 @@ public class GridManager : MonoBehaviour {
 			Main.instance.tileStatsUI.SetActive (false);
 			Main.instance.unitStatsUI.SetActive (false);
 			Main.instance.dmgCalculationUI.SetActive(false);
+			Main.instance.captureStateUI.SetActive (false);
 		}
 
 		if(currentState == CurrentState.None){
@@ -672,7 +692,8 @@ public class GridManager : MonoBehaviour {
 							currentState = CurrentState.MovedUnit;
 							hideUITiles(gridUIMoveInstances);
 							Main.instance.ordersUI.SetActive(true);
-							Main.instance.attackButton.SetActive(true);
+							Main.instance.attackButton.SetActive(getAvailableTargets(destinationTile).Count > 0);
+							Main.instance.captureButton.SetActive(destinationTile.canBeCaptured && destinationTile.unit.canCapture && destinationTile.owner != destinationTile.unit.owner);
 						}
 						else {
 							GameObject dest = gridUIMoveInstances.Find ((GameObject obj) => obj.transform.position.Equals(tile.gameObject.transform.position));
@@ -683,7 +704,8 @@ public class GridManager : MonoBehaviour {
 								currentState = CurrentState.MovedUnit;
 								hideUITiles(gridUIMoveInstances);
 								Main.instance.ordersUI.SetActive(true);
-								Main.instance.attackButton.SetActive(destinationTile.unit.canMoveAndFire);
+								Main.instance.attackButton.SetActive(destinationTile.unit.canMoveAndFire && getAvailableTargets(destinationTile).Count > 0);
+								Main.instance.captureButton.SetActive(destinationTile.canBeCaptured && destinationTile.unit.canCapture && destinationTile.owner != destinationTile.unit.owner);
 							}
 							else{
 								Debug.LogWarning("Nope, not a valid move.");
@@ -747,8 +769,6 @@ public class GridManager : MonoBehaviour {
 				}else{
 					Debug.LogWarning ("Touched nothing.");
 				}
-
-				//TODO : If the target is eligible, resolve combat! Then, put the unit as inactive and return to currentState.None.
 			}
 			
 			//On a right click, the attack order is canceled.

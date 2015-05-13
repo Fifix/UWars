@@ -6,30 +6,39 @@ public class Main : MonoBehaviour {
 
 	public static Main instance = null;
 
+	[Header("Singletons")]
 	public GameObject gridManager;
-
 	public GameObject terrainTiles;
-
 	public GameObject units;
-
 	public GameObject gridUITiles;
 
+	[Header("Tile stats UI")]
 	public GameObject tileStatsUI;
 	public GameObject tileType;
 	public GameObject defenseRating;
 
+	[Header("Capture state UI")]
+	public GameObject captureStateUI;
+	public GameObject tileOwner;
+	public GameObject capturePoints;
+
+	[Header("Unit stats UI")]
 	public GameObject unitStatsUI;
 	public GameObject unitType;
 	public GameObject unitHP;
 
+	[Header("Orders UI")]
 	public GameObject ordersUI;
 	public GameObject waitButton;
 	public GameObject attackButton;
+	public GameObject captureButton;
 
+	[Header("Damage calculation UI")]
 	public GameObject dmgCalculationUI;
 	public GameObject dmgToDefender;
 	public GameObject dmgToAttacker;
 
+	[Header("Player turn UI")]
 	public GameObject playerTurnUI;
 	public GameObject currentPlayerText;
 	public GameObject endTurnButton;
@@ -59,13 +68,18 @@ public class Main : MonoBehaviour {
 		}
 	}
 
+	public void OnCaptureCommandClick() {
+		Debug.Log ("OnCaptureCommandClick!");
+		GridManager.instance.OnCaptureCommandClick();
+	}
+
 	public void OnAttackCommandClick() {
-		Debug.Log ("ONATKCMDCLICK!");
+		Debug.Log ("OnAttackCommandClick!");
 		GridManager.instance.onAttackCommandClick();
 	}
 
 	public void OnWaitCommandClick() {
-		Debug.Log ("ONWAITCMDCLICK!");
+		Debug.Log ("OnWaitCommandClick!");
 		GridManager.instance.onWaitCommandClick();
 	}
 

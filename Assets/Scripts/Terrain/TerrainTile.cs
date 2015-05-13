@@ -12,6 +12,10 @@ public class TerrainTile : MonoBehaviour {
 	public int mvtCostCaterpillar;
 	public int mvtCostAir = 1;
 
+	public bool canBeCaptured = false;
+	public int owner = 0;
+	public int capturePoints = 20;
+
 	public int defenseRating;
 
 	public Vector2 gamePosition;
@@ -34,15 +38,39 @@ public class TerrainTile : MonoBehaviour {
 		}
 		this.transform.position = new Vector3(gridPos.x + offset, gridPos.y * 0.75f, 0f);
 	}
-	
-	// Use this for initialization
-	void Start () {
-	
+
+	public void setTileOwner(int owner){
+		this.owner = owner;
+		SpriteRenderer unitSpriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+		if(owner == 0){ //Neutral.
+			unitSpriteRenderer.color = new Color(0.5f, 0.5f, 0.5f);
+		}
+		else if(owner == 1){
+			unitSpriteRenderer.color = new Color(1f, 0, 0);
+		}
+		else if(owner == 2){
+			unitSpriteRenderer.color = new Color(0, 0, 1f);
+		} else{
+			Debug.LogError("setTileOwner must implement new players!");
+		}
 	}
 	
-	// Update is called once per frame
-	void Update () {
+	/*
+	 * Utility method to try to capture the tile (only for cities, factories, airports).
+	 */
+	public void captureTile(int captureDamage, int capturingUnitOwner){
+		capturePoints = capturePoints - captureDamage;
+		if(capturePoints <= 0){
+			setTileOwner(capturingUnitOwner);
+			resetCaptureStatus();
+		}
+	}
 
+	/*
+	 * Utility method to reset the capture (capturing unit is dead, or moved out of the tile)
+	 */
+	public void resetCaptureStatus(){
+		capturePoints = 20;
 	}
 
 }

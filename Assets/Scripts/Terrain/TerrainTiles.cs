@@ -12,6 +12,12 @@ public class TerrainTiles : MonoBehaviour {
 	public GameObject roadPrefab;
 	//References the woods tile prefab.
 	public GameObject woodsPrefab;
+	//References the city tile prefab.
+	public GameObject cityPrefab;
+	//References the factory tile prefab.
+	public GameObject factoryPrefab;
+	//References the airport tile prefab.
+	public GameObject airportPrefab;
 
 	public static TerrainTiles instance = null;
 
@@ -43,6 +49,15 @@ public class TerrainTiles : MonoBehaviour {
 			break;
 		case "Woods":
 			result = woodsPrefab;
+			break;
+		case "City":
+			result = cityPrefab;
+			break;
+		case "Factory":
+			result = factoryPrefab;
+			break;
+		case "Airport":
+			result = airportPrefab;
 			break;
 		default:
 			break;
